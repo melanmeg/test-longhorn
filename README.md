@@ -69,6 +69,8 @@ spec:
 EOF
 ```
 
+> http://192.168.11.161:8087
+
 ## クリーンアップ
 ```bash
 kubectl -n longhorn-system patch -p '{"value": "true"}' --type=merge lhs deleting-confirmation-flag
