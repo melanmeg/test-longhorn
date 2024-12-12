@@ -1,8 +1,5 @@
-global:
-  nodeSelector: {}
-
 defaultSettings:
-  # If true, it may conflict with other settings and not function correctly.
+  # # When this setting is disabled, Longhorn creates a default disk on each node that is added to the cluster.
   createDefaultDiskLabeledNodes: false
   defaultDataPath: /mnt/longhorn-xfs/
   replicaSoftAntiAffinity: true
@@ -11,28 +8,12 @@ defaultSettings:
   upgradeChecker: true
   defaultReplicaCount: 3
   defaultDataLocality: disabled
-  defaultLonghornStaticStorageClass: longhorn-storage-class
   priorityClass: high-priority
   autoSalvage: true
   disableSchedulingOnCordonedNode: false
-  replicaZoneSoftAntiAffinity: false
+  replicaZoneSoftAntiAffinity: true
   replicaDiskSoftAntiAffinity: true
   # ref: https://longhorn.github.io/longhorn-tests/manual/pre-release/node/improve-node-failure-handling/
   nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
   guaranteedInstanceManagerCpu: 20
   orphanAutoDeletion: true
-
-persistence:
-  defaultClass: true
-  defaultFsType: ext4
-  defaultMkfsParams: ""
-  defaultClassReplicaCount: 3
-  defaultDataLocality: disabled
-  reclaimPolicy: Delete
-  migratable: true
-  defaultDiskSelector:
-    enable: true
-    selector: "ssd, fast"
-  defaultNodeSelector:
-    enable: true
-    selector: "storage, fast"

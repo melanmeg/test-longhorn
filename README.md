@@ -12,6 +12,21 @@ $ sudo mount /dev/vdb /mnt/longhorn-xfs
 $ echo "/dev/vdb /mnt/longhorn-xfs xfs defaults 0 0" | sudo tee -a /etc/fstab
 ```
 
+```bash
+$ echo "dm_crypt" | sudo tee -a /etc/modules-load.d/longhorn.conf && \
+  sudo modprobe dm_crypt && \
+  sudo systemctl stop multipathd.socket && \
+  sudo systemctl disable multipathd.socket && \
+  sudo systemctl stop multipathd && \
+  sudo systemctl disable multipathd
+```
+
+```bash
+# $ kubectl label nodes test-k8s-wk-1 storage=longhorn && \
+#   kubectl label nodes test-k8s-wk-2 storage=longhorn && \
+#   kubectl label nodes test-k8s-wk-3 storage=longhorn
+```
+
 ## インストール
 ```bash
 $ helm repo add longhorn https://charts.longhorn.io && \
@@ -23,7 +38,7 @@ $ helm repo add longhorn https://charts.longhorn.io && \
 ```
 
 ```bash
-$ kubectl -n longhorn-system get pod
+$ watch kubectl -n longhorn-system get pod
 NAME                                                READY   STATUS    RESTARTS   AGE
 csi-attacher-59d7469cbc-jp8ch                       1/1     Running   0          28s
 csi-attacher-59d7469cbc-q67vw                       1/1     Running   0          28s
@@ -76,65 +91,41 @@ EOF
 
 > http://192.168.11.161:8087
 
-## ストレージタグ
-```bash
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: storageclass-config
-  namespace: longhorn-system
-data:
-  storageclass.yaml: |
-    kind: StorageClass
-    apiVersion: storage.k8s.io/v1
-    metadata:
-      name: longhorn
-      annotations:
-        storageclass.kubernetes.io/is-default-class: "true"
-        node.longhorn.io/default-node-tags: '["fast","storage"]'
-        node.longhorn.io/create-default-disk: 'config'
-        node.longhorn.io/default-disks-config:
-        '[
-            {
-                "name":"fast-ssd-disk",
-                "path":"/mnt/longhorn-xfs",
-                "allowScheduling":false,
-                "storageReserved":10485760,
-                "tags":[
-                    "ssd",
-                    "fast"
-                ]
-            }
-        ]'
-    provisioner: driver.longhorn.io
-    allowVolumeExpansion: true
-    reclaimPolicy: "Delete"
-    volumeBindingMode: Immediate
-    parameters:
-      numberOfReplicas: "3"
-      staleReplicaTimeout: "480"
-      diskSelector: "ssd"
-      nodeSelector: "storage,fast"
-EOF
-```
+## ボリューム
 
 ```bash
 kubectl apply -f - <<EOF
-kind: StorageClass
 apiVersion: storage.k8s.io/v1
+kind: StorageClass
 metadata:
-  name: longhorn-fast
-  namespace: longhorn-system
+  name: my-longhorn-sc
 provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
 parameters:
   numberOfReplicas: "3"
-  staleReplicaTimeout: "480" # 8 hours in minutes
-  diskSelector: "ssd"
-  nodeSelector: "storage,fast"
+  staleReplicaTimeout: "2880" # 48 hours in minutes
+  fromBackup: ""
+  fsType: ext4
 EOF
-```
 
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-longhorn-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: my-longhorn-sc
+  resources:
+    requests:
+      storage: 2Gi
+EOF
+
+kubectl delete pvc my-longhorn-pvc && kubectl delete sc my-longhorn
+```
 
 ## ノードとディスクのデフォルト設定
 ```bash
