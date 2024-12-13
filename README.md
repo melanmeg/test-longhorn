@@ -105,6 +105,7 @@ reclaimPolicy: Delete
 volumeBindingMode: Immediate
 parameters:
   numberOfReplicas: "3"
+  replicaAutoBalance: "least-effort" # Replica Auto Balance
   staleReplicaTimeout: "2880" # 48 hours in minutes
   fromBackup: ""
   fsType: ext4
@@ -127,18 +128,9 @@ EOF
 kubectl delete pvc my-longhorn-pvc && kubectl delete sc my-longhorn
 ```
 
-## ノードとディスクのデフォルト設定
-```bash
-```
-
 ## クリーンアップ
 ```bash
 $ kubectl -n longhorn-system patch -p '{"value": "true"}' --type=merge lhs deleting-confirmation-flag && \
   helm uninstall longhorn -n longhorn-system && \
   kubectl delete namespace longhorn-system
 ```
-
-Helmを使用してロングホーンをインストールする場合は、
-チャートをインストールする前にvalues.yamlファイルで
-global.nodeSelector、longhornManager.nodeSelector、longhornUI.nodeSelector、longhornDriver.nodeSelector
-のHelm値を変更できます。
