@@ -1,0 +1,32 @@
+tenant:
+  name: minio-tenant-1
+
+  configuration:
+    name: myminio-env-configuration
+  configSecret:
+    name: myminio-env-configuration
+    accessKey: minio
+    secretKey: minio123
+
+  pools:
+    - servers: 4
+      name: pool-0
+      volumesPerServer: 4
+      size: 2Gi
+      storageClassName: directpv-min-io
+
+  mountPath: /export
+  subPath: /data
+
+  buckets:
+    - name: k8s-longhorn
+
+  metrics:
+    enabled: false
+    port: 9000
+    protocol: http
+
+  certificate:
+    requestAutoCert: false
+
+  prometheusOperator: false

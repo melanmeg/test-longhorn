@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-client-job
+  namespace: tenant-1
+spec:
+  template:
+    metadata:
+      labels:
+        app: minio-client
+    spec:
+      containers:
+        - name: wait-for-init
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              # Wait for MinIO to be ready
+              echo "Waiting for MinIO to be ready..."
+              until $(nc -zv minio.tenant-1 80) ; do
+                echo "Waiting for MinIO to be ready..."
+                sleep 5
+              done
+              echo "MinIO is ready."
+        - name: minio-init
+          image: minio/mc
+          command:
+            - sh
+            - -c
+            - |
+              # bucket rule to add
+              echo "Adding ILM rule..."
+              mc alias set myminio http://minio.tenant-1 minio minio123
+              mc ilm rule add myminio/k8s-longhorn --expire-days 90
+              echo "ILM rule added."
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+      restartPolicy: Never

@@ -27,6 +27,89 @@ $ echo "dm_crypt" | sudo tee -a /etc/modules-load.d/longhorn.conf && \
 #   kubectl label nodes test-k8s-wk-3 storage=longhorn
 ```
 
+## minio
+
+```bash
+$ helm repo add minio-operator https://operator.min.io && \
+  helm install \
+  --namespace minio-operator \
+  --version 6.0.4 \
+  --create-namespace \
+  operator minio-operator/operator
+
+$ helm install \
+  --namespace tenant-1 \
+  --version 6.0.4 \
+  --create-namespace \
+  --values values.yaml \
+  tenant-1 minio-operator/tenant
+
+$ watch kubectl get all -n tenant-1
+
+
+sudo curl https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
+sudo chmod +x /usr/local/bin/mc
+
+mc alias set myminio http://10.96.149.142 minio minio123
+mc mb myminio/mybucket
+mc ilm rule add myminio/k8s-longhorn --expire-days 90
+
+$ (
+  set -x; cd "$(mktemp -d)" &&
+  OS="$(uname | tr '[:upper:]' '[:lower:]')" &&
+  ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" &&
+  KREW="krew-${OS}_${ARCH}" &&
+  curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" &&
+  tar zxvf "${KREW}.tar.gz" &&
+  ./"${KREW}" install krew
+)
+$ echo 'export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"' >> ~/.bashrc
+$ kubectl krew install directpv
+
+# ref: https://github.com/minio/directpv/blob/master/docs/installation.md
+# ref: https://github.com/minio/directpv/blob/master/seccomp.json
+$ kubectl directpv install --seccomp-profile seccomp.json # --apparmor-profile apparmor.profile
+
+# 2,3回実施
+$ kubectl directpv discover
+$ kubectl directpv init drives.yaml --dangerous
+
+$ kubectl directpv info
+
+# $ helm repo add minio https://charts.min.io/
+# $ helm install minio minio/minio \
+#   --namespace minio \
+#   --version 5.0.14 \
+#   --values values.yaml
+```
+
+until $(nc -zv minio.tenant-1 80 > /dev/null 2>&1) ; do
+  sleep 5
+done
+echo hoge
+
+## UIアクセス
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-lb
+  namespace: tenant-1
+spec:
+  type: NodePort
+  ports:
+    - port: 9090
+      targetPort: 9090
+      nodePort: 30003
+      protocol: TCP
+  selector:
+    v1.min.io/tenant: minio-tenant-1
+EOF
+```
+
+> http://192.168.11.161:8083
+
 ## インストール
 ```bash
 $ helm repo add longhorn https://charts.longhorn.io && \
@@ -133,4 +216,6 @@ kubectl delete pvc my-longhorn-pvc && kubectl delete sc my-longhorn
 $ kubectl -n longhorn-system patch -p '{"value": "true"}' --type=merge lhs deleting-confirmation-flag && \
   helm uninstall longhorn -n longhorn-system && \
   kubectl delete namespace longhorn-system
+
+$ kubectl delete namespace tenant-1
 ```

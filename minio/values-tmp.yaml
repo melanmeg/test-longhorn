@@ -1,0 +1,54 @@
+rootUser: minio
+rootPassword: minio123
+
+# Get root user/password from secret
+existingSecret: minio-secret
+
+mode: distributed
+
+# Number of drives attached to a node
+drivesPerNode: 1
+# Number of MinIO containers running
+replicas: 4
+# Number of expanded MinIO clusters
+pools: 1
+# Persistence
+persistence:
+  enabled: true
+  storageClass: "nfs-share"
+  accessMode: ReadWriteOnce
+  size: 20Gi
+
+# Resource request
+resources:
+  requests:
+    memory: 1Gi
+
+# Minio Buckets
+buckets:
+  - name: k8s-longhorn
+    policy: none
+
+# mc Commands
+customCommands:
+  - command: ilm rule add myminio/k8s-longhorn --expire-days 90
+
+# Minio Policies
+policies:
+  - name: longhorn
+    statements:
+      - resources:
+          - "arn:aws:s3:::k8s-longhorn"
+          - "arn:aws:s3:::k8s-longhorn/*"
+        actions:
+          - "s3:DeleteObject"
+          - "s3:GetObject"
+          - "s3:ListBucket"
+          - "s3:PutObject"
+
+# Minio Users
+users:
+  - accessKey: longhorn
+    existingSecret: minio-secret
+    existingSecretKey: longhornPassword
+    policy: longhorn

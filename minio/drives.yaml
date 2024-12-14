@@ -1,0 +1,23 @@
+version: v1
+nodes:
+  - name: test-k8s-wk-1
+    drives:
+      - id: 253:32$WaE9RqZJkVkbgaNfiraG2i73/60tKNkchB5TvvDBpn4=
+        name: vdc
+        size: 21474836480
+        make: ""
+        select: "yes"
+  - name: test-k8s-wk-2
+    drives:
+      - id: 253:32$NOCZt8VdYCmeQp7XJZXKiDL0l++3q55G/FtAdvmwMBY=
+        name: vdc
+        size: 21474836480
+        make: ""
+        select: "yes"
+  - name: test-k8s-wk-3
+    drives:
+      - id: 253:32$WSVKL12ux//GrtS4uNMDxNXFXKAO+pTxr1xwwXAj6ec=
+        name: vdc
+        size: 21474836480
+        make: ""
+        select: "yes"
