@@ -192,9 +192,7 @@ parameters:
   staleReplicaTimeout: "2880" # 48 hours in minutes
   fromBackup: ""
   fsType: ext4
-EOF
-
-kubectl apply -f - <<EOF
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -210,6 +208,29 @@ EOF
 
 kubectl delete pvc my-longhorn-pvc && kubectl delete sc my-longhorn
 ```
+
+## backup-target
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: longhorn-default-setting
+  namespace: longhorn-system
+data:
+  default-setting.yaml: |-
+    backup-target: nfs://192.168.11.12:/mnt/nfsshare/k8s/share
+EOF
+```
+
+## longhorn cli
+```bash
+curl -L https://github.com/longhorn/cli/releases/download/v1.7.2/longhornctl-linux-amd64 -o longhornctl
+chmod +x longhornctl
+sudo mv ./longhornctl /usr/local/bin/longhornctl
+```
+
 
 ## クリーンアップ
 ```bash
