@@ -15,6 +15,6 @@ defaultSettings:
   replicaZoneSoftAntiAffinity: true
   replicaDiskSoftAntiAffinity: true
   # ref: https://longhorn.github.io/longhorn-tests/manual/pre-release/node/improve-node-failure-handling/
-  nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+  nodeDownPodDeletionPolicy: do-nothing
   guaranteedInstanceManagerCpu: 20
   orphanAutoDeletion: true

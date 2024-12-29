@@ -22,9 +22,20 @@ $ echo "dm_crypt" | sudo tee -a /etc/modules-load.d/longhorn.conf && \
 ```
 
 ```bash
-# $ kubectl label nodes test-k8s-wk-1 storage=longhorn && \
-#   kubectl label nodes test-k8s-wk-2 storage=longhorn && \
-#   kubectl label nodes test-k8s-wk-3 storage=longhorn
+$ kubectl label nodes test-k8s-wk-1 storage=longhorn && \
+  kubectl label nodes test-k8s-wk-2 storage=longhorn && \
+  kubectl label nodes test-k8s-wk-3 storage=longhorn
+
+```bash
+$ kubectl label nodes test-k8s-wk-1 node.longhorn.io/create-default-disk=true && \
+  kubectl label nodes test-k8s-wk-2 node.longhorn.io/create-default-disk=true && \
+  kubectl label nodes test-k8s-wk-3 node.longhorn.io/create-default-disk=true
+
+$ kubectl label nodes test-k8s-wk-1 node.longhorn.io/default-node-tags: '["fast","storage"]' && \
+  kubectl label nodes test-k8s-wk-2 node.longhorn.io/default-node-tags: '["fast","storage"]' && \
+  kubectl label nodes test-k8s-wk-3 node.longhorn.io/default-node-tags: '["fast","storage"]'
+
+
 ```
 
 ## minio
@@ -188,8 +199,8 @@ reclaimPolicy: Delete
 volumeBindingMode: Immediate
 parameters:
   numberOfReplicas: "3"
-  replicaAutoBalance: "least-effort" # Replica Auto Balance
-  staleReplicaTimeout: "2880" # 48 hours in minutes
+  replicaAutoBalance: "best-effort" # Replica Auto Balance
+  staleReplicaTimeout: "1440" # 24 hours in minutes
   fromBackup: ""
   fsType: ext4
 ---
@@ -206,7 +217,7 @@ spec:
       storage: 2Gi
 EOF
 
-kubectl delete pvc my-longhorn-pvc && kubectl delete sc my-longhorn
+kubectl delete pvc my-longhorn-pvc && kubectl delete sc my-longhorn-sc
 ```
 
 ## backup-target
